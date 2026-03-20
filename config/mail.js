@@ -1,7 +1,15 @@
 const nodemailer = require('nodemailer');
+const dns = require('dns');
+
+// Force Node.js to use IPv4. Render free tier does not route IPv6, causing ENETUNREACH.
+if (dns.setDefaultResultOrder) {
+    dns.setDefaultResultOrder('ipv4first');
+}
 
 const transporter = nodemailer.createTransport({
-    service: 'gmail', // You can change this to your email provider
+    host: 'smtp.gmail.com',
+    port: 465,
+    secure: true,
     auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS
