@@ -4,14 +4,18 @@ const mysql = require('mysql2/promise');
 const createDBConnection = async () => {
     try {
         // First connect without database selected to create it if it doesn't exist
-        const connection = await mysql.createConnection({
-            host: process.env.DB_HOST,
-            user: process.env.DB_USER,
-            password: process.env.DB_PASSWORD,
-        });
+        try {
+            const connection = await mysql.createConnection({
+                host: process.env.DB_HOST,
+                user: process.env.DB_USER,
+                password: process.env.DB_PASSWORD,
+            });
 
-        await connection.query(`CREATE DATABASE IF NOT EXISTS \`${process.env.DB_NAME}\`;`);
-        await connection.end();
+            await connection.query(`CREATE DATABASE IF NOT EXISTS \`${process.env.DB_NAME}\`;`);
+            await connection.end();
+        } catch (dbErr) {
+            console.warn("Notice: Skipping database creation command (blocked by Aiven). Assuming database exists.");
+        }
 
         // Connect with database selected
         const pool = mysql.createPool({
