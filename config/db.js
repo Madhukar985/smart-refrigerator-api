@@ -4,11 +4,17 @@ const mysql = require('mysql2/promise');
 const createDBConnection = async () => {
     try {
         // First connect without database selected to create it if it doesn't exist
+        const sslConfig = process.env.DB_HOST && process.env.DB_HOST !== 'localhost' 
+            ? { rejectUnauthorized: false } 
+            : undefined;
+
         try {
             const connection = await mysql.createConnection({
                 host: process.env.DB_HOST,
+                port: process.env.DB_PORT || 3306,
                 user: process.env.DB_USER,
                 password: process.env.DB_PASSWORD,
+                ssl: sslConfig
             });
 
             await connection.query(`CREATE DATABASE IF NOT EXISTS \`${process.env.DB_NAME}\`;`);
@@ -20,9 +26,11 @@ const createDBConnection = async () => {
         // Connect with database selected
         const pool = mysql.createPool({
             host: process.env.DB_HOST,
+            port: process.env.DB_PORT || 3306,
             user: process.env.DB_USER,
             password: process.env.DB_PASSWORD,
             database: process.env.DB_NAME,
+            ssl: sslConfig,
             waitForConnections: true,
             connectionLimit: 10,
             queueLimit: 0
