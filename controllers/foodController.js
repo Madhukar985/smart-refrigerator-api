@@ -141,7 +141,7 @@ exports.analyzeImage = async (req, res) => {
                 "name": "String (the specific name of the food item, e.g., 'Eggs', 'Milk')",
                 "category": "String (must be one of: 'Dairy', 'Vegetables', 'Fruits', 'Meat', 'Bakery', 'Beverages', 'Others')",
                 "quantity": Number (estimated quantity, e.g., 12 for a carton of eggs, 1 for an apple),
-                "expiryDays": Number (estimated number of days until it expires based on standard food safety knowledge)
+                "expiryDays": Number (CRITICAL INSTRUCTION: FIRST, strictly search the image for ANY printed expiration dates, "Best By", "Sell By", or "Use By" labels. If you can read a exact date printed anywhere on the packaging, calculate the exact number of days from today until that printed date. ONLY if there is absolutely no printed date visible, then estimate the days until it expires based on standard food safety knowledge)
             }
         `;
 
