@@ -1,38 +1,25 @@
-const nodemailer = require('nodemailer');
-const dns = require('dns');
-
-// Force Node.js to use IPv4. Render free tier does not route IPv6, causing ENETUNREACH.
-if (dns.setDefaultResultOrder) {
-    dns.setDefaultResultOrder('ipv4first');
-}
-
-const transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 587,
-    secure: false, // true for 465, false for other ports (starts TLS automatically)
-    requireTLS: true,
-    tls: {
-        rejectUnauthorized: false
-    },
-    auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
-    }
-});
+const { Resend } = require('resend');
 
 const sendMail = async (to, subject, text) => {
     try {
-        const mailOptions = {
-            from: process.env.EMAIL_USER,
-            to,
-            subject,
-            text
-        };
-        const info = await transporter.sendMail(mailOptions);
-        console.log('Email sent: ' + info.response);
+        const resend = new Resend(process.env.RESEND_API_KEY);
+        
+        const { data, error } = await resend.emails.send({
+            from: 'Smart Refrigerator <onboarding@resend.dev>',
+            to: to,
+            subject: subject,
+            text: text
+        });
+
+        if (error) {
+            console.error('Error sending email via Resend API:', error.message);
+            return false;
+        }
+
+        console.log('Email successfully sent via Resend API! ID: ' + data.id);
         return true;
-    } catch (error) {
-        console.error('Error sending email:', error);
+    } catch (err) {
+        console.error('Crash in Resend API:', err.message);
         return false;
     }
 };
