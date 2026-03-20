@@ -40,7 +40,7 @@ exports.register = async (req, res) => {
 
     } catch (err) {
         console.error(err.message);
-        res.status(500).send('Server Error');
+        res.status(500).json({ msg: 'DB Error: ' + err.message });
     }
 };
 
@@ -89,7 +89,7 @@ exports.login = async (req, res) => {
 
     } catch (err) {
         console.error(err.message);
-        res.status(500).send('Server Error');
+        res.status(500).json({ msg: 'DB Error: ' + err.message });
     }
 };
 
