@@ -7,13 +7,13 @@ const runExpiryCheck = async (userId = null) => {
     console.log('Running Expiry Alert Job...');
 
     try {
-        // Find items expiring in 1 or 2 days and also get the user's email
+        // Find items expiring today or in the future and also get the user's email
         let query = `
             SELECT f.item_name, f.expiry_date, f.quantity, u.email, u.name,
                    DATEDIFF(f.expiry_date, CURDATE()) as days_to_expire
             FROM food_items f
             JOIN users u ON f.user_id = u.id
-            WHERE DATEDIFF(f.expiry_date, CURDATE()) IN (1, 2) AND f.status = 'Fresh'
+            WHERE DATEDIFF(f.expiry_date, CURDATE()) >= 0 AND f.status = 'Fresh'
         `;
         let queryParams = [];
 
@@ -45,8 +45,15 @@ const runExpiryCheck = async (userId = null) => {
 
                 let itemsListText = "";
                 user.items.forEach(item => {
-                    const days = item.days_to_expire === 1 ? '1 day' : '2 days';
-                    message += `- ${item.item_name} (Quantity: ${item.quantity}) is going to expire in ${days}.\n`;
+                    let daysText = '';
+                    if (item.days_to_expire === 0) {
+                        daysText = 'today';
+                    } else if (item.days_to_expire === 1) {
+                        daysText = 'in 1 day';
+                    } else {
+                        daysText = `in ${item.days_to_expire} days`;
+                    }
+                    message += `- ${item.item_name} (Quantity: ${item.quantity}) is going to expire ${daysText}.\n`;
                     itemsListText += `${item.item_name}, `;
                 });
 
