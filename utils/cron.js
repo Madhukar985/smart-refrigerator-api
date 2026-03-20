@@ -13,7 +13,9 @@ const runExpiryCheck = async (userId = null) => {
                    DATEDIFF(f.expiry_date, CURDATE()) as days_to_expire
             FROM food_items f
             JOIN users u ON f.user_id = u.id
-            WHERE DATEDIFF(f.expiry_date, CURDATE()) >= 0 AND f.status = 'Fresh'
+            WHERE DATEDIFF(f.expiry_date, CURDATE()) >= 0 
+              AND DATEDIFF(f.expiry_date, CURDATE()) <= 3 
+              AND f.status = 'Fresh'
         `;
         let queryParams = [];
 
