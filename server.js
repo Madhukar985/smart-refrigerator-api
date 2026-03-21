@@ -31,6 +31,24 @@ app.get('/api', (req, res) => {
     res.json({ message: 'Smart Refrigerator API is running' });
 });
 
+// Webhook for external cron services (like cron-job.org) to trigger the expiry check
+app.get('/api/trigger-cron', async (req, res) => {
+    // Basic protection to prevent random triggering
+    const CRON_SECRET = process.env.CRON_SECRET || 'default_cron_secret_123';
+    
+    if (req.query.secret !== CRON_SECRET) {
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    try {
+        const { runExpiryCheck } = require('./utils/cron');
+        const result = await runExpiryCheck();
+        res.json({ success: true, result });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // Fallback route for frontend (SPA-like routing or serve specific HTML files)
 app.use((req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
