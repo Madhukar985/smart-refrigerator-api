@@ -32,7 +32,7 @@ app.get('/api', (req, res) => {
 });
 
 // Webhook for external cron services (like cron-job.org) to trigger the expiry check
-app.get('/api/trigger-cron', async (req, res) => {
+app.get('/api/trigger-cron', (req, res) => {
     // Basic protection to prevent random triggering
     const CRON_SECRET = process.env.CRON_SECRET || 'default_cron_secret_123';
     
@@ -41,11 +41,14 @@ app.get('/api/trigger-cron', async (req, res) => {
     }
 
     try {
+        // Return success instantly so cron-job.org doesn't timeout!
+        res.json({ success: true, message: 'Cron job acknowledged and running in background!' });
+        
+        // Execute the heavy AI + Email operations asynchronously
         const { runExpiryCheck } = require('./utils/cron');
-        const result = await runExpiryCheck();
-        res.json({ success: true, result });
+        runExpiryCheck().catch(err => console.error('Background Cron Error:', err.message));
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        console.error('Trigger Cron Error:', err.message);
     }
 });
 
