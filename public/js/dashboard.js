@@ -524,8 +524,8 @@ function loadCharts() {
     const itemQty = {};
 
     allItems.forEach(item => {
-        // Calculate usage by total physical quantity instead of just row count
-        categoryQty[item.category] = (categoryQty[item.category] || 0) + item.quantity;
+        // Calculate usage by entry count (ignoring physical quantity)
+        categoryQty[item.category] = (categoryQty[item.category] || 0) + 1;
         
         // Normalize item name logic for Top Items
         const name = item.item_name.toLowerCase().trim();
