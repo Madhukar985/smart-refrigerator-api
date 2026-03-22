@@ -519,31 +519,37 @@ function loadCharts() {
     dynamicCharts = [];
 
     // Prepare data
-    const categoryQty = {};
+    const itemQty = {};
     const categoryItems = {};
 
     allItems.forEach(item => {
-        // Calculate usage by entry count (ignoring physical quantity)
-        categoryQty[item.category] = (categoryQty[item.category] || 0) + 1;
+        const name = item.item_name.toLowerCase().trim();
+        const display = name.charAt(0).toUpperCase() + name.slice(1);
+        
+        // Calculate usage by entry count (ignoring physical quantity for pie sections so ml/grams dont completely dwarf PCs visually in the pie)
+        itemQty[display] = (itemQty[display] || 0) + 1;
         
         // Group items strictly inside their respective categories
         if (!categoryItems[item.category]) categoryItems[item.category] = {};
-        const name = item.item_name.toLowerCase().trim();
-        const display = name.charAt(0).toUpperCase() + name.slice(1);
         categoryItems[item.category][display] = (categoryItems[item.category][display] || 0) + item.quantity;
     });
 
     const ctx1 = document.getElementById('categoryChart').getContext('2d');
 
+    // Dynamically generate a large palette for potentially many items
+    const dynamicPalette = [];
+    for(let i=0; i<Object.keys(itemQty).length; i++) {
+        const colors = ['#4F46E5', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#6B7280', '#06b6d4', '#f97316', '#84cc16', '#eab308'];
+        dynamicPalette.push(colors[i % colors.length]);
+    }
+
     myChart1 = new Chart(ctx1, {
         type: 'pie',
         data: {
-            labels: Object.keys(categoryQty),
+            labels: Object.keys(itemQty),
             datasets: [{
-                data: Object.values(categoryQty),
-                backgroundColor: [
-                    '#4F46E5', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#6B7280'
-                ],
+                data: Object.values(itemQty),
+                backgroundColor: dynamicPalette,
                 borderWidth: 2,
                 borderRadius: 4
             }]
