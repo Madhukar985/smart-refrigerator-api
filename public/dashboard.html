@@ -274,24 +274,22 @@
 
                 <!-- Analytics Section -->
                 <div id="section-analytics" class="d-section d-none">
-                    <h3 class="fw-bold mb-4">Analytics & Usage</h3>
-                    <div class="row g-4">
-                        <div class="col-md-5">
-                            <div class="table-card h-100">
-                                <h5 class="fw-bold mb-4 fs-6 pb-2 border-bottom">Usage by Category</h5>
-                                <div class="px-3 pb-2" style="position: relative; height:300px; width:100%">
+                    <h3 class="fw-bold mb-4">Analytics & Category Breakdown</h3>
+                    
+                    <div class="row g-4 mb-4">
+                        <div class="col-12">
+                            <div class="table-card">
+                                <h5 class="fw-bold mb-4 fs-6 pb-2 border-bottom">Overall Categories Distribution</h5>
+                                <div class="px-3 pb-2" style="position: relative; height:320px; width:100%">
                                     <canvas id="categoryChart"></canvas>
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-7">
-                            <div class="table-card h-100">
-                                <h5 class="fw-bold mb-4 fs-6 pb-2 border-bottom">Most Used Items (Top 5)</h5>
-                                <div class="px-3 pb-2" style="position: relative; height:300px; width:100%">
-                                    <canvas id="topItemsChart"></canvas>
-                                </div>
-                            </div>
-                        </div>
+                    </div>
+
+                    <h4 class="fw-bold mb-3 fs-5 mt-4">Specific category items</h4>
+                    <div class="row g-4" id="dynamicCategoryChartsContainer">
+                        <!-- Filled by JS -->
                     </div>
                 </div>
 

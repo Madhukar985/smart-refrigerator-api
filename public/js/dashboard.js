@@ -1,8 +1,7 @@
 // Dashboard Logic
 let allItems = [];
 let myChart1 = null;
-let myChart2 = null;
-let myChart3 = null;
+let dynamicCharts = [];
 
 // Camera stream variable
 let stream = null;
@@ -516,30 +515,25 @@ function useCapturedData() {
 // Charts
 function loadCharts() {
     if (myChart1) myChart1.destroy();
-    if (myChart2) myChart2.destroy();
-    if (myChart3) myChart3.destroy();
+    dynamicCharts.forEach(c => c.destroy());
+    dynamicCharts = [];
 
     // Prepare data
     const categoryQty = {};
-    const itemQty = {};
+    const categoryItems = {};
 
     allItems.forEach(item => {
         // Calculate usage by entry count (ignoring physical quantity)
         categoryQty[item.category] = (categoryQty[item.category] || 0) + 1;
         
-        // Normalize item name logic for Top Items
+        // Group items strictly inside their respective categories
+        if (!categoryItems[item.category]) categoryItems[item.category] = {};
         const name = item.item_name.toLowerCase().trim();
         const display = name.charAt(0).toUpperCase() + name.slice(1);
-        itemQty[display] = (itemQty[display] || 0) + item.quantity;
+        categoryItems[item.category][display] = (categoryItems[item.category][display] || 0) + item.quantity;
     });
 
-    // Top 5 Items
-    const sortedItems = Object.entries(itemQty).sort((a,b) => b[1] - a[1]).slice(0, 5);
-    const topItemLabels = sortedItems.map(i => i[0]);
-    const topItemData = sortedItems.map(i => i[1]);
-
     const ctx1 = document.getElementById('categoryChart').getContext('2d');
-    const ctx2 = document.getElementById('topItemsChart').getContext('2d');
 
     myChart1 = new Chart(ctx1, {
         type: 'pie',
@@ -558,34 +552,66 @@ function loadCharts() {
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-                legend: { position: 'bottom' }
+                legend: { position: 'right' }
             }
         }
     });
 
-    myChart2 = new Chart(ctx2, {
-        type: 'bar',
-        data: {
-            labels: topItemLabels,
-            datasets: [{
-                label: 'Total Quantity Used/Stocked',
-                data: topItemData,
-                backgroundColor: 'rgba(79, 70, 229, 0.8)',
-                borderRadius: 5
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            indexAxis: 'y', // Horizontal bar chart
-            scales: {
-                x: { beginAtZero: true, grid: { display: false } },
-                y: { grid: { display: false } }
+    // Generate dynamic charts for each category
+    const container = document.getElementById('dynamicCategoryChartsContainer');
+    container.innerHTML = '';
+
+    Object.keys(categoryItems).forEach((catName, index) => {
+        const itemData = categoryItems[catName];
+        
+        // build column
+        const col = document.createElement('div');
+        col.className = 'col-md-6 mb-4';
+        
+        const canvasId = \`catChart_\${index}\`;
+        col.innerHTML = \`
+            <div class="table-card h-100">
+                <h5 class="fw-bold mb-4 fs-6 pb-2 border-bottom">\${catName} Items</h5>
+                <div class="px-3 pb-2" style="position: relative; height:250px; width:100%">
+                    <canvas id="\${canvasId}"></canvas>
+                </div>
+            </div>
+        \`;
+        container.appendChild(col);
+
+        // draw chart
+        const ctx = document.getElementById(canvasId).getContext('2d');
+        
+        // Sort items in this category by quantity
+        const sorted = Object.entries(itemData).sort((a,b) => b[1] - a[1]);
+        const labels = sorted.map(i => i[0]);
+        const data = sorted.map(i => i[1]);
+
+        // Dynamically rotate vibrant colors for bars
+        const colorPalette = ['#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#4F46E5'];
+        const barColor = colorPalette[index % colorPalette.length];
+
+        const newChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Total Quantity',
+                    data: data,
+                    backgroundColor: barColor,
+                    borderRadius: 4
+                }]
             },
-            plugins: {
-                legend: { display: false }
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true }
+                }
             }
-        }
+        });
+        dynamicCharts.push(newChart);
     });
 }
 
