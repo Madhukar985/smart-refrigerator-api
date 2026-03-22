@@ -542,7 +542,7 @@ function loadCharts() {
     const ctx2 = document.getElementById('topItemsChart').getContext('2d');
 
     myChart1 = new Chart(ctx1, {
-        type: 'doughnut',
+        type: 'pie',
         data: {
             labels: Object.keys(categoryQty),
             datasets: [{
