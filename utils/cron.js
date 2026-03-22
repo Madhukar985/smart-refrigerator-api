@@ -65,7 +65,7 @@ const runExpiryCheck = async (userId = null) => {
                     try {
                         const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
                         const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-                        const prompt = `I have the following food items expiring in my fridge: ${itemsListText}. Suggest a creative meal I can cook using some or all of these items. Provide the name of the meal and a 1-2 sentence short description. Keep it brief.`;
+                        const prompt = `I have the following food items expiring in my fridge: ${itemsListText}. Suggest a creative Indian meal or recipe I can cook using some or all of these items. Provide the name of the Indian dish and a 1-2 sentence short description. Keep it brief.`;
                         const result = await model.generateContent(prompt);
                         aiSuggestion = '💡 AI Recipe Suggestion: \n' + result.response.text().trim();
                     } catch (aiError) {
