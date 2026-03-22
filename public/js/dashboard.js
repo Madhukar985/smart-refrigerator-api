@@ -210,7 +210,7 @@ function updateInventoryView() {
             <td>#${item.item_id}</td>
             <td class="fw-semibold">${item.item_name}</td>
             <td>${item.category}</td>
-            <td>${item.quantity}</td>
+            <td>${item.quantity} ${item.unit || 'pcs'}</td>
             <td>${expiryDate.toLocaleDateString()}</td>
             <td><span class="badge ${statusClass} rounded-pill">${item.status}</span></td>
             <td>
@@ -230,6 +230,7 @@ async function addManualItem(e) {
         item_name: document.getElementById('itemName').value,
         category: document.getElementById('itemCategory').value,
         quantity: document.getElementById('itemQuantity').value,
+        unit: document.getElementById('itemUnit').value,
         expiry_date: document.getElementById('itemExpiry').value
     };
 
@@ -288,6 +289,7 @@ function openEditModal(id) {
     document.getElementById('editItemName').value = item.item_name;
     document.getElementById('editItemCategory').value = item.category;
     document.getElementById('editItemQuantity').value = item.quantity;
+    document.getElementById('editItemUnit').value = item.unit || 'pcs';
     
     // Format date for input[type="date"]
     const date = new Date(item.expiry_date);
@@ -306,6 +308,7 @@ async function saveEditedItem() {
         item_name: document.getElementById('editItemName').value,
         category: document.getElementById('editItemCategory').value,
         quantity: document.getElementById('editItemQuantity').value,
+        unit: document.getElementById('editItemUnit').value,
         expiry_date: document.getElementById('editItemExpiry').value,
         status: document.getElementById('editItemStatus').value
     };
@@ -458,6 +461,7 @@ async function captureImage() {
                 name: data.name,
                 category: data.category,
                 qty: data.quantity,
+                unit: data.unit || 'pcs',
                 expiryDays: data.expiryDays
             };
             
@@ -465,7 +469,7 @@ async function captureImage() {
             resultDiv.innerHTML = `
                 <div class="alert alert-success py-2 small mb-0">
                     <strong>AI Detected:</strong> "${currentCapturedItem.name}" <br>
-                    Category: ${currentCapturedItem.category} | Qty: ${currentCapturedItem.qty} | Est. Expiry: ${currentCapturedItem.expiryDays} days<br>
+                    Category: ${currentCapturedItem.category} | Qty: ${currentCapturedItem.qty} ${currentCapturedItem.unit} | Est. Expiry: ${currentCapturedItem.expiryDays} days<br>
                     <button class="btn btn-sm btn-link p-0 mt-1" onclick="useCapturedData()">Use this data</button>
                 </div>
             `;
@@ -491,6 +495,12 @@ function useCapturedData() {
     document.getElementById('itemName').value = currentCapturedItem.name;
     document.getElementById('itemCategory').value = currentCapturedItem.category;
     document.getElementById('itemQuantity').value = currentCapturedItem.qty;
+    
+    // Check if unit exists in our dropdown
+    const unitSelect = document.getElementById('itemUnit');
+    const unitExists = Array.from(unitSelect.options).some(opt => opt.value === currentCapturedItem.unit);
+    if (unitExists) unitSelect.value = currentCapturedItem.unit;
+    else unitSelect.value = 'pcs';
     
     // Set expiry
     const d = new Date();
@@ -599,7 +609,7 @@ async function loadExpiringWidget() {
                     <li class="list-group-item d-flex justify-content-between align-items-center bg-transparent px-0 border-bottom">
                         <div>
                             <span class="fw-bold">${item.item_name}</span>
-                            <span class="text-muted ms-2">(Qty: ${item.quantity})</span>
+                            <span class="text-muted ms-2">(Qty: ${item.quantity} ${item.unit || 'pcs'})</span>
                         </div>
                         <span class="badge ${badgeClass} rounded-pill">Expires in ${daysText}</span>
                     </li>

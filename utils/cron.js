@@ -9,7 +9,7 @@ const runExpiryCheck = async (userId = null) => {
     try {
         // Find items expiring today or in the future and also get the user's email
         let query = `
-            SELECT f.item_name, f.expiry_date, f.quantity, u.email, u.name,
+            SELECT f.item_name, f.expiry_date, f.quantity, f.unit, u.email, u.name,
                    DATEDIFF(f.expiry_date, CURDATE()) as days_to_expire
             FROM food_items f
             JOIN users u ON f.user_id = u.id
@@ -55,7 +55,7 @@ const runExpiryCheck = async (userId = null) => {
                     } else {
                         daysText = `in ${item.days_to_expire} days`;
                     }
-                    message += `- ${item.item_name} (Quantity: ${item.quantity}) is going to expire ${daysText}.\n`;
+                    message += `- ${item.item_name} (Quantity: ${item.quantity} ${item.unit || 'pcs'}) is going to expire ${daysText}.\n`;
                     itemsListText += `${item.item_name}, `;
                 });
 

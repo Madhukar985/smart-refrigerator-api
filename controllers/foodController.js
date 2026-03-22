@@ -4,7 +4,7 @@ const { GoogleGenerativeAI } = require('@google/generative-ai');
 // @route   POST api/food
 exports.addFoodItem = async (req, res) => {
     try {
-        let { item_name, category, quantity, expiry_date, status } = req.body;
+        let { item_name, category, quantity, unit, expiry_date, status } = req.body;
         
         // If the request contains an image (from Camera API), we could integrate OCR or an AI service here.
         // For this implementation, we assume the frontend processes the image and sends the extracted data,
@@ -15,10 +15,11 @@ exports.addFoodItem = async (req, res) => {
         }
 
         if (!status) status = 'Fresh';
+        if (!unit) unit = 'pcs';
 
         const [result] = await db.query(
-            'INSERT INTO food_items (item_name, category, quantity, expiry_date, status, user_id) VALUES (?, ?, ?, ?, ?, ?)',
-            [item_name, category, quantity, expiry_date, status, req.user.id]
+            'INSERT INTO food_items (item_name, category, quantity, unit, expiry_date, status, user_id) VALUES (?, ?, ?, ?, ?, ?, ?)',
+            [item_name, category, quantity, unit, expiry_date, status, req.user.id]
         );
 
         res.status(201).json({ msg: 'Item Added Successfully', item_id: result.insertId });
@@ -45,7 +46,7 @@ exports.getFoodItems = async (req, res) => {
 
 // @route   PUT api/food/:id
 exports.updateFoodItem = async (req, res) => {
-    const { item_name, category, quantity, expiry_date, status } = req.body;
+    const { item_name, category, quantity, unit, expiry_date, status } = req.body;
     const itemId = req.params.id;
 
     try {
@@ -60,13 +61,14 @@ exports.updateFoodItem = async (req, res) => {
             item_name: item_name || existing[0].item_name,
             category: category || existing[0].category,
             quantity: quantity !== undefined ? quantity : existing[0].quantity,
+            unit: unit || existing[0].unit || 'pcs',
             expiry_date: expiry_date || existing[0].expiry_date,
             status: status || existing[0].status
         };
 
         await db.query(
-            'UPDATE food_items SET item_name = ?, category = ?, quantity = ?, expiry_date = ?, status = ? WHERE item_id = ?',
-            [updateData.item_name, updateData.category, updateData.quantity, updateData.expiry_date, updateData.status, itemId]
+            'UPDATE food_items SET item_name = ?, category = ?, quantity = ?, unit = ?, expiry_date = ?, status = ? WHERE item_id = ?',
+            [updateData.item_name, updateData.category, updateData.quantity, updateData.unit, updateData.expiry_date, updateData.status, itemId]
         );
 
         res.json({ msg: 'Item Updated Successfully' });
@@ -140,7 +142,8 @@ exports.analyzeImage = async (req, res) => {
             {
                 "name": "String (the specific name of the food item, e.g., 'Eggs', 'Milk')",
                 "category": "String (must be one of: 'Dairy', 'Vegetables', 'Fruits', 'Meat', 'Bakery', 'Beverages', 'Others')",
-                "quantity": Number (estimated quantity, e.g., 12 for a carton of eggs, 1 for an apple),
+                "quantity": Number (estimated fractional or whole quantity, e.g., 12.0 for eggs, 1.5 for a bag),
+                "unit": "String (must be one exactly of: 'pcs', 'kg', 'gm', 'L', 'ml')",
                 "expiryDays": Number (CRITICAL INSTRUCTION: FIRST, strictly search the image for ANY printed expiration dates, "Best By", "Sell By", or "Use By" labels. If you can read a exact date printed anywhere on the packaging, calculate the exact number of days from today until that printed date. ONLY if there is absolutely no printed date visible, then estimate the days until it expires based on standard food safety knowledge)
             }
         `;
@@ -181,7 +184,7 @@ exports.analyzeImage = async (req, res) => {
 exports.getExpiringItemsWithAI = async (req, res) => {
     try {
         const query = `
-            SELECT item_name, quantity, DATEDIFF(expiry_date, CURDATE()) as days_to_expire
+            SELECT item_name, quantity, unit, DATEDIFF(expiry_date, CURDATE()) as days_to_expire
             FROM food_items
             WHERE user_id = ? AND DATEDIFF(expiry_date, CURDATE()) IN (1, 2) AND status = 'Fresh'
         `;
