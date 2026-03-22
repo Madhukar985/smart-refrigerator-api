@@ -142,8 +142,8 @@ function updateDashboardView() {
 
     allItems.forEach(item => {
         const expiryDate = new Date(item.expiry_date);
-        const diffDays = Math.ceil((expiryDate - today) / (1000 * 60 * 60 * 24));
-        
+        expiryDate.setHours(0,0,0,0);
+        const diffDays = Math.round((expiryDate - today) / (1000 * 60 * 60 * 24));
         let statusClass = 'badge-fresh';
         let statusText = 'Fresh';
 
@@ -199,8 +199,8 @@ function updateInventoryView() {
 
     allItems.forEach(item => {
         const expiryDate = new Date(item.expiry_date);
-        const diffDays = Math.ceil((expiryDate - today) / (1000 * 60 * 60 * 24));
-        
+        expiryDate.setHours(0,0,0,0);
+        const diffDays = Math.round((expiryDate - today) / (1000 * 60 * 60 * 24));
         let statusClass = 'badge-fresh';
         if (diffDays < 0) statusClass = 'badge-expired';
         else if (diffDays <= 2) statusClass = 'badge-expiring';
