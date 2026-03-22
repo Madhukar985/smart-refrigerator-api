@@ -568,15 +568,15 @@ function loadCharts() {
         const col = document.createElement('div');
         col.className = 'col-md-6 mb-4';
         
-        const canvasId = \`catChart_\${index}\`;
-        col.innerHTML = \`
+        const canvasId = `catChart_${index}`;
+        col.innerHTML = `
             <div class="table-card h-100">
-                <h5 class="fw-bold mb-4 fs-6 pb-2 border-bottom">\${catName} Items</h5>
+                <h5 class="fw-bold mb-4 fs-6 pb-2 border-bottom">${catName} Items</h5>
                 <div class="px-3 pb-2" style="position: relative; height:250px; width:100%">
-                    <canvas id="\${canvasId}"></canvas>
+                    <canvas id="${canvasId}"></canvas>
                 </div>
             </div>
-        \`;
+        `;
         container.appendChild(col);
 
         // draw chart
