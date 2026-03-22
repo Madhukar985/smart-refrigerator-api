@@ -2,6 +2,7 @@
 let allItems = [];
 let myChart1 = null;
 let myChart2 = null;
+let myChart3 = null;
 
 // Camera stream variable
 let stream = null;
@@ -516,35 +517,48 @@ function useCapturedData() {
 function loadCharts() {
     if (myChart1) myChart1.destroy();
     if (myChart2) myChart2.destroy();
+    if (myChart3) myChart3.destroy();
 
     // Prepare data
-    const categoryCount = {};
-    const statusCount = { 'Fresh': 0, 'Expiring Soon': 0, 'Expired': 0 };
+    const categoryQty = {};
+    const itemQty = {};
 
     allItems.forEach(item => {
-        categoryCount[item.category] = (categoryCount[item.category] || 0) + 1;
-        statusCount[item.status] = (statusCount[item.status] || 0) + 1;
+        // Calculate usage by total physical quantity instead of just row count
+        categoryQty[item.category] = (categoryQty[item.category] || 0) + item.quantity;
+        
+        // Normalize item name logic for Top Items
+        const name = item.item_name.toLowerCase().trim();
+        const display = name.charAt(0).toUpperCase() + name.slice(1);
+        itemQty[display] = (itemQty[display] || 0) + item.quantity;
     });
 
+    // Top 5 Items
+    const sortedItems = Object.entries(itemQty).sort((a,b) => b[1] - a[1]).slice(0, 5);
+    const topItemLabels = sortedItems.map(i => i[0]);
+    const topItemData = sortedItems.map(i => i[1]);
+
     const ctx1 = document.getElementById('categoryChart').getContext('2d');
-    const ctx2 = document.getElementById('statusChart').getContext('2d');
+    const ctx2 = document.getElementById('topItemsChart').getContext('2d');
 
     myChart1 = new Chart(ctx1, {
-        type: 'pie',
+        type: 'doughnut',
         data: {
-            labels: Object.keys(categoryCount),
+            labels: Object.keys(categoryQty),
             datasets: [{
-                data: Object.values(categoryCount),
+                data: Object.values(categoryQty),
                 backgroundColor: [
                     '#4F46E5', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#6B7280'
                 ],
-                borderWidth: 1
+                borderWidth: 2,
+                borderRadius: 4
             }]
         },
         options: {
             responsive: true,
+            maintainAspectRatio: false,
             plugins: {
-                legend: { position: 'right' }
+                legend: { position: 'bottom' }
             }
         }
     });
@@ -552,18 +566,24 @@ function loadCharts() {
     myChart2 = new Chart(ctx2, {
         type: 'bar',
         data: {
-            labels: Object.keys(statusCount),
+            labels: topItemLabels,
             datasets: [{
-                label: 'Number of Items',
-                data: Object.values(statusCount),
-                backgroundColor: ['#10B981', '#F59E0B', '#EF4444'],
+                label: 'Total Quantity Used/Stocked',
+                data: topItemData,
+                backgroundColor: 'rgba(79, 70, 229, 0.8)',
                 borderRadius: 5
             }]
         },
         options: {
             responsive: true,
+            maintainAspectRatio: false,
+            indexAxis: 'y', // Horizontal bar chart
             scales: {
-                y: { beginAtZero: true, ticks: { stepSize: 1 } }
+                x: { beginAtZero: true, grid: { display: false } },
+                y: { grid: { display: false } }
+            },
+            plugins: {
+                legend: { display: false }
             }
         }
     });
