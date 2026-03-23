@@ -27,10 +27,18 @@ const runExpiryCheck = async (userId = null) => {
         const [expiringItems] = await db.query(query, queryParams);
 
         if (expiringItems.length > 0) {
-            // Fetch all registered users to send the alert to everyone
-            const [allUsers] = await db.query('SELECT name, email FROM users');
+            // If triggered manually by a specific user, only send to them. Otherwise, send to all (cron job).
+            let usersQuery = 'SELECT name, email FROM users';
+            let usersParams = [];
+            
+            if (userId) {
+                usersQuery += ' WHERE id = ?';
+                usersParams.push(userId);
+            }
 
-            if (allUsers.length === 0) {
+            const [targetUsers] = await db.query(usersQuery, usersParams);
+
+            if (targetUsers.length === 0) {
                 console.log('No registered users found to send alerts.');
                 return { success: false, message: 'No registered users found.' };
             }
@@ -66,9 +74,9 @@ const runExpiryCheck = async (userId = null) => {
                 }
             }
 
-            // Send emails to all registered users
+            // Send emails to the target users
             let sentCount = 0;
-            for (const user of allUsers) {
+            for (const user of targetUsers) {
                 let message = `Hello ${user.name},\n\nThis is a friendly reminder that the following items in the Smart Refrigerator are expiring soon:\n\n`;
                 message += itemsDetails;
                 message += `\n${aiSuggestion}\n`;
