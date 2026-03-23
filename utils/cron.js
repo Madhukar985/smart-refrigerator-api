@@ -95,8 +95,8 @@ const runExpiryCheck = async (userId = null) => {
     }
 }
 
-// Run every day at 10:45 PM (45 22 * * *)
-cron.schedule('45 22 * * *', () => runExpiryCheck(), {
+// Run every day at 10:55 PM (55 22 * * *)
+cron.schedule('55 22 * * *', () => runExpiryCheck(), {
     timezone: "Asia/Kolkata"
 });
 
