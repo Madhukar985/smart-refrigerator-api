@@ -70,7 +70,16 @@ const runExpiryCheck = async (userId = null) => {
                         const result = await model.generateContent(prompt);
                         aiSuggestion = '💡 AI Recipe Suggestion: \n' + result.response.text().trim();
                     } catch (aiError) {
-                        console.error('AI Suggestion Error:', aiError.message);
+                        if (aiError.message && aiError.message.includes('429')) {
+                            console.error("Gemini AI Quota Exceeded for Email Alerts");
+                            let fallback = `Here are some quick ideas for your expiring items:\n\n`;
+                            fallback += `- Stir Fry / Mix Curry: Toss your fresh ingredients into a quick comforting Indian curry or sabzi.\n`;
+                            fallback += `- Pulao / Fried Rice: Mix your remaining items with rice and gentle spices for an easy meal.\n\n`;
+                            fallback += `(AI personalized recipes are temporarily paused to save API quota. Try again tomorrow!)`;
+                            aiSuggestion = '💡 AI Recipe Suggestion: \n' + fallback;
+                        } else {
+                            console.error('AI Suggestion Error:', aiError.message);
+                        }
                     }
                 }
 
