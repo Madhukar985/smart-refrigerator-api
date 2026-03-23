@@ -682,9 +682,15 @@ async function loadExpiringWidget() {
             });
             
             if (data.aiSuggestion) {
-                // Parse markdown into simple HTML if Gemini returns bold asterisks
-                let formattedSuggestion = data.aiSuggestion.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-                formattedSuggestion = formattedSuggestion.replace(/\*/g, '<br>•');
+                let formattedSuggestion = data.aiSuggestion;
+                // Only parse basic Markdown if it doesn't already look like HTML
+                if (!formattedSuggestion.includes('<br>')) {
+                    formattedSuggestion = formattedSuggestion.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                    // Replace bullet prefixes "* " or "- " with HTML bullets
+                    formattedSuggestion = formattedSuggestion.replace(/(?:^|\n)[\*\-]\s+/g, '\n&bull; ');
+                    // Replace newlines with <br>
+                    formattedSuggestion = formattedSuggestion.replace(/\n/g, '<br>');
+                }
                 document.getElementById('aiMealSuggestionText').innerHTML = formattedSuggestion;
             } else {
                 document.getElementById('aiMealSuggestionText').innerHTML = "No AI suggestion could be generated at this time. Try to use these items soon!";

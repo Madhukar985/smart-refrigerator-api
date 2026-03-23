@@ -223,11 +223,10 @@ exports.getExpiringItemsWithAI = async (req, res) => {
                     if (aiError.message && aiError.message.includes('429')) {
                         console.error("Gemini AI Quota Exceeded for Meal Suggestions");
                         
-                        // Provide a generic fallback suggestion based on actual items
-                        let fallback = `Here are some quick ideas for your expiring items (${itemsListText}):\n\n`;
-                        fallback += `• **Stir Fry / Mix Curry**: Toss your fresh ingredients into a quick comforting Indian curry or sabzi.\n`;
-                        fallback += `• **Pulao / Fried Rice**: Mix remaining items with rice and gentle spices for an easy meal.\n\n`;
-                        fallback += `*(AI personalized recipes are temporarily paused to save API quota. Try again later!)*`;
+                        let fallback = `Here are some quick ideas for your expiring items (${itemsListText}):<br><br>`;
+                        fallback += `&bull; <strong>Stir Fry / Mix Curry</strong>: Toss your fresh ingredients into a quick comforting Indian curry or sabzi.<br>`;
+                        fallback += `&bull; <strong>Pulao / Fried Rice</strong>: Mix remaining items with rice and gentle spices for an easy meal.<br><br>`;
+                        fallback += `<i>(AI personalized recipes are temporarily paused to save API quota. Try again later!)</i>`;
                         aiSuggestion = fallback;
                     } else {
                         console.error('AI Suggestion Error on Dashboard:', aiError.message);
