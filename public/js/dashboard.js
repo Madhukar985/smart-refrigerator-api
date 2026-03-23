@@ -162,8 +162,8 @@ function updateDashboardView() {
             item.status = 'Fresh';
         }
 
-        // Add to dashboard quick view if expiring or expired (up to 5 items)
-        if ((diffDays <= 5) && dashboardTbody.children.length < 5) {
+        // Add to dashboard quick view if expiring soon (up to 5 items)
+        if (item.status === 'Expiring Soon' && dashboardTbody.children.length < 5) {
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td class="fw-semibold">${item.item_name}</td>
@@ -185,19 +185,32 @@ function updateDashboardView() {
     document.getElementById('expiredItemsCount').textContent = expired;
 }
 
+function filterAndNavigate(status) {
+    const filterEl = document.getElementById('inventoryFilter');
+    if (filterEl) filterEl.value = status;
+    updateInventoryView();
+    showSection('inventory', document.querySelectorAll('.sidebar-link')[1]);
+}
+
 function updateInventoryView() {
+    const filter = document.getElementById('inventoryFilter') ? document.getElementById('inventoryFilter').value : 'All';
     const tbody = document.querySelector('#inventoryTable tbody');
     tbody.innerHTML = '';
 
-    if (allItems.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-muted">Your inventory is empty. Add some items!</td></tr>';
+    let itemsToDisplay = allItems;
+    if (filter !== 'All') {
+        itemsToDisplay = allItems.filter(item => item.status === filter);
+    }
+
+    if (itemsToDisplay.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-muted">No items to display.</td></tr>';
         return;
     }
 
     const today = new Date();
     today.setHours(0,0,0,0);
 
-    allItems.forEach(item => {
+    itemsToDisplay.forEach(item => {
         const expiryDate = new Date(item.expiry_date);
         expiryDate.setHours(0,0,0,0);
         const diffDays = Math.round((expiryDate - today) / (1000 * 60 * 60 * 24));

@@ -87,7 +87,7 @@
                     
                     <div class="row g-4 mb-4">
                         <div class="col-xl-3 col-sm-6">
-                            <div class="stat-card">
+                            <div class="stat-card" onclick="filterAndNavigate('All')" style="cursor: pointer;" title="View all items">
                                 <div class="stat-icon" style="color: var(--primary);">
                                     <i class="fa-solid fa-boxes-stacked"></i>
                                 </div>
@@ -98,7 +98,7 @@
                             </div>
                         </div>
                         <div class="col-xl-3 col-sm-6">
-                            <div class="stat-card">
+                            <div class="stat-card" onclick="filterAndNavigate('Fresh')" style="cursor: pointer;" title="View fresh items">
                                 <div class="stat-icon" style="color: var(--success); border-color: #d1fae5; background-color: #ecfdf5;">
                                     <i class="fa-solid fa-leaf"></i>
                                 </div>
@@ -109,7 +109,7 @@
                             </div>
                         </div>
                         <div class="col-xl-3 col-sm-6">
-                            <div class="stat-card">
+                            <div class="stat-card" onclick="filterAndNavigate('Expiring Soon')" style="cursor: pointer;" title="View items expiring soon">
                                 <div class="stat-icon" style="color: var(--warning); border-color: #fef3c7; background-color: #fffbeb;">
                                     <i class="fa-solid fa-clock"></i>
                                 </div>
@@ -120,7 +120,7 @@
                             </div>
                         </div>
                         <div class="col-xl-3 col-sm-6">
-                            <div class="stat-card">
+                            <div class="stat-card" onclick="filterAndNavigate('Expired')" style="cursor: pointer;" title="View expired items">
                                 <div class="stat-icon" style="color: var(--danger); border-color: #fee2e2; background-color: #fef2f2;">
                                     <i class="fa-solid fa-triangle-exclamation"></i>
                                 </div>
@@ -160,9 +160,17 @@
                 <div id="section-inventory" class="d-section d-none">
                     <div class="d-flex justify-content-between align-items-end mb-4">
                         <h3 class="fw-bold mb-0">Inventory Display</h3>
-                        <button class="btn btn-primary btn-sm px-3" onclick="showSection('add-item', document.querySelectorAll('.sidebar-link')[2])">
-                            <i class="fa-solid fa-plus me-1"></i> Add Item
-                        </button>
+                        <div class="d-flex gap-2">
+                            <select id="inventoryFilter" class="form-select form-select-sm" onchange="updateInventoryView()">
+                                <option value="All">All Items</option>
+                                <option value="Fresh">Fresh</option>
+                                <option value="Expiring Soon">Expiring Soon</option>
+                                <option value="Expired">Expired</option>
+                            </select>
+                            <button class="btn btn-primary btn-sm px-3" onclick="showSection('add-item', document.querySelectorAll('.sidebar-link')[2])">
+                                <i class="fa-solid fa-plus me-1"></i> Add Item
+                            </button>
+                        </div>
                     </div>
                     
                     <div class="table-card">
