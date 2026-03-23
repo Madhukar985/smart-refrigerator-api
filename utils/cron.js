@@ -9,7 +9,7 @@ const runExpiryCheck = async (userId = null) => {
     try {
         // Find items expiring today or in the future and also get the user's email
         let query = `
-            SELECT f.item_name, f.expiry_date, f.quantity, f.unit, u.email, u.name as owner_name,
+            SELECT f.item_name, f.category, f.expiry_date, f.quantity, f.unit, u.email, u.name as owner_name,
                    DATEDIFF(f.expiry_date, CURDATE()) as days_to_expire
             FROM food_items f
             JOIN users u ON f.user_id = u.id
@@ -57,7 +57,7 @@ const runExpiryCheck = async (userId = null) => {
                         daysText = `in ${item.days_to_expire} days`;
                     }
                     message += `- ${item.item_name} (Quantity: ${item.quantity} ${item.unit || 'pcs'}) is going to expire ${daysText}.\n`;
-                    itemsListText += `${item.item_name}, `;
+                    itemsListText += `${item.item_name} (Category: ${item.category || 'Unknown'}), `;
                 });
 
                 // Generate AI Meal Suggestion specifically for this user's items
@@ -66,7 +66,7 @@ const runExpiryCheck = async (userId = null) => {
                     try {
                         const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
                         const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-                        const prompt = `I have the following food items expiring in my fridge: ${itemsListText}. Suggest 2 or 3 creative Indian meals or recipes I can cook using some or all of these items. Provide the name of each Indian dish and a 1-2 sentence short description. Keep it brief. Return it formatted nicely as a list.`;
+                        const prompt = `I have the following food items expiring in my fridge: ${itemsListText}. Suggest 2 or 3 creative Indian meals or recipes I can cook using some or all of these items. Predict the food items according to their categories to make the meal well-balanced. Provide the name of each Indian dish and a 1-2 sentence short description. Keep it brief. Return it formatted nicely as a list.`;
                         const result = await model.generateContent(prompt);
                         aiSuggestion = '💡 AI Recipe Suggestion: \n' + result.response.text().trim();
                     } catch (aiError) {

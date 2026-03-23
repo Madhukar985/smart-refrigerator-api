@@ -188,7 +188,7 @@ exports.analyzeImage = async (req, res) => {
 exports.getExpiringItemsWithAI = async (req, res) => {
     try {
         const query = `
-            SELECT item_name, quantity, unit, DATEDIFF(expiry_date, CURDATE()) as days_to_expire
+            SELECT item_name, category, quantity, unit, DATEDIFF(expiry_date, CURDATE()) as days_to_expire
             FROM food_items
             WHERE user_id = ? AND DATEDIFF(expiry_date, CURDATE()) IN (1, 2) AND status = 'Fresh'
         `;
@@ -198,7 +198,7 @@ exports.getExpiringItemsWithAI = async (req, res) => {
         let aiSuggestion = null;
 
         if (expiringItems.length > 0 && process.env.GEMINI_API_KEY) {
-            let itemsListText = expiringItems.map(i => i.item_name).sort().join(', ');
+            let itemsListText = expiringItems.map(i => `${i.item_name} (Category: ${i.category || 'Unknown'})`).sort().join(', ');
             
             // 1. Check Cache
             const cached = suggestionCache.get(req.user.id);
@@ -209,7 +209,7 @@ exports.getExpiringItemsWithAI = async (req, res) => {
                 try {
                     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
                     const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-                    const prompt = `I have the following food items expiring in my fridge: ${itemsListText}. Suggest 2 or 3 creative Indian meals or recipes I can cook using some or all of these items. Provide the name of each Indian dish and a 1-2 sentence short description. Keep it brief. Return it formatted nicely as a list.`;
+                    const prompt = `I have the following food items expiring in my fridge: ${itemsListText}. Suggest 2 or 3 creative Indian meals or recipes I can cook using some or all of these items. Predict the food items according to their categories to make the meal well-balanced. Provide the name of each Indian dish and a 1-2 sentence short description. Keep it brief. Return it formatted nicely as a list.`;
                     const result = await model.generateContent(prompt);
                     aiSuggestion = result.response.text().trim();
                     
