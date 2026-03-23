@@ -1,28 +1,40 @@
-const { Resend } = require('resend');
-
 const sendMail = async (to, subject, text) => {
     try {
-        const resend = new Resend(process.env.RESEND_API_KEY);
-        
-        // Use the verified domain email from environment variables, or fallback to onboarding for testing
-        const fromEmail = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
-        
-        const { data, error } = await resend.emails.send({
-            from: `Smart Refrigerator <${fromEmail}>`,
-            to: to,
-            subject: subject,
-            text: text
-        });
-
-        if (error) {
-            console.error('Error sending email via Resend API:', error.message);
+        if (!process.env.BREVO_API_KEY) {
+            console.error('Missing BREVO_API_KEY in environment variables.');
             return false;
         }
 
-        console.log('Email successfully sent via Resend API! ID: ' + data.id);
+        const fromEmail = process.env.BREVO_FROM_EMAIL || 'your-verified-email@gmail.com';
+
+        const payload = {
+            sender: { email: fromEmail, name: "Smart Refrigerator" },
+            to: [{ email: to }],
+            subject: subject,
+            textContent: text
+        };
+
+        const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+            method: 'POST',
+            headers: {
+                'accept': 'application/json',
+                'api-key': process.env.BREVO_API_KEY,
+                'content-type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            console.error('Error sending email via Brevo API:', errorData);
+            return false;
+        }
+
+        const data = await response.json();
+        console.log('Email successfully sent via Brevo API! Message ID: ' + data.messageId);
         return true;
     } catch (err) {
-        console.error('Crash in Resend API:', err.message);
+        console.error('Crash in Brevo API:', err.message);
         return false;
     }
 };
