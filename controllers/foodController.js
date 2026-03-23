@@ -1,6 +1,10 @@
 const db = require('../config/db');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 
+// Cache for AI meal suggestions to prevent rate-limiting
+const suggestionCache = new Map();
+const CACHE_TTL = 12 * 60 * 60 * 1000; // 12 hours
+
 // @route   POST api/food
 exports.addFoodItem = async (req, res) => {
     try {
@@ -194,21 +198,41 @@ exports.getExpiringItemsWithAI = async (req, res) => {
         let aiSuggestion = null;
 
         if (expiringItems.length > 0 && process.env.GEMINI_API_KEY) {
-            let itemsListText = expiringItems.map(i => i.item_name).join(', ');
+            let itemsListText = expiringItems.map(i => i.item_name).sort().join(', ');
             
-            try {
-                const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-                const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-                const prompt = `I have the following food items expiring in my fridge: ${itemsListText}. Suggest 2 or 3 creative Indian meals or recipes I can cook using some or all of these items. Provide the name of each Indian dish and a 1-2 sentence short description. Keep it brief. Return it formatted nicely as a list.`;
-                const result = await model.generateContent(prompt);
-                aiSuggestion = result.response.text().trim();
-            } catch (aiError) {
-                if (aiError.message && aiError.message.includes('429')) {
-                    console.error("Gemini AI Quota Exceeded for Meal Suggestions");
-                    aiSuggestion = "AI Meal suggestions are temporarily unavailable due to high demand (API Quota Exceeded). Please try again later.";
-                } else {
-                    console.error('AI Suggestion Error on Dashboard:', aiError.message);
-                    aiSuggestion = "Could not generate AI meal suggestion at this time.";
+            // 1. Check Cache
+            const cached = suggestionCache.get(req.user.id);
+            if (cached && cached.itemsListText === itemsListText && (Date.now() - cached.timestamp < CACHE_TTL)) {
+                aiSuggestion = cached.suggestion;
+            } else {
+                // 2. Fetch from AI if no valid cache
+                try {
+                    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+                    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+                    const prompt = `I have the following food items expiring in my fridge: ${itemsListText}. Suggest 2 or 3 creative Indian meals or recipes I can cook using some or all of these items. Provide the name of each Indian dish and a 1-2 sentence short description. Keep it brief. Return it formatted nicely as a list.`;
+                    const result = await model.generateContent(prompt);
+                    aiSuggestion = result.response.text().trim();
+                    
+                    // Save to cache
+                    suggestionCache.set(req.user.id, {
+                        itemsListText,
+                        suggestion: aiSuggestion,
+                        timestamp: Date.now()
+                    });
+                } catch (aiError) {
+                    if (aiError.message && aiError.message.includes('429')) {
+                        console.error("Gemini AI Quota Exceeded for Meal Suggestions");
+                        
+                        // Provide a generic fallback suggestion based on actual items
+                        let fallback = `Here are some quick ideas for your expiring items (${itemsListText}):\n\n`;
+                        fallback += `• **Stir Fry / Mix Curry**: Toss your fresh ingredients into a quick comforting Indian curry or sabzi.\n`;
+                        fallback += `• **Pulao / Fried Rice**: Mix remaining items with rice and gentle spices for an easy meal.\n\n`;
+                        fallback += `*(AI personalized recipes are temporarily paused to save API quota. Try again later!)*`;
+                        aiSuggestion = fallback;
+                    } else {
+                        console.error('AI Suggestion Error on Dashboard:', aiError.message);
+                        aiSuggestion = "Could not generate AI meal suggestion at this time.";
+                    }
                 }
             }
         }
