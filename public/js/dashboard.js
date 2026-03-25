@@ -667,8 +667,15 @@ async function loadExpiringWidget() {
             listContainer.innerHTML = '';
             
             data.expiringItems.forEach(item => {
-                const daysText = item.days_to_expire === 1 ? '1 day' : '2 days';
-                const badgeClass = item.days_to_expire === 1 ? 'bg-danger' : 'bg-warning text-dark';
+                let daysText;
+                if (item.days_to_expire === 0) {
+                    daysText = 'today';
+                } else if (item.days_to_expire === 1) {
+                    daysText = '1 day';
+                } else {
+                    daysText = item.days_to_expire + ' days';
+                }
+                const badgeClass = item.days_to_expire === 0 ? 'bg-danger' : (item.days_to_expire === 1 ? 'bg-danger' : 'bg-warning text-dark');
                 
                 listContainer.innerHTML += `
                     <li class="list-group-item d-flex justify-content-between align-items-center bg-transparent px-0 border-bottom">

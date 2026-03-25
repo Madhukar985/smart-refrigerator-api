@@ -15,7 +15,7 @@ const runExpiryCheck = async (userId = null) => {
             JOIN users u ON f.user_id = u.id
             WHERE DATEDIFF(f.expiry_date, CURDATE()) >= 0 
               AND DATEDIFF(f.expiry_date, CURDATE()) <= 3 
-              AND f.status = 'Fresh'
+              AND f.status IN ('Fresh', 'Expiring Soon')
         `;
         let queryParams = [];
 

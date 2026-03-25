@@ -190,7 +190,7 @@ exports.getExpiringItemsWithAI = async (req, res) => {
         const query = `
             SELECT item_name, category, quantity, unit, DATEDIFF(expiry_date, CURDATE()) as days_to_expire
             FROM food_items
-            WHERE user_id = ? AND DATEDIFF(expiry_date, CURDATE()) IN (1, 2) AND status = 'Fresh'
+            WHERE user_id = ? AND DATEDIFF(expiry_date, CURDATE()) >= 0 AND DATEDIFF(expiry_date, CURDATE()) <= 3 AND status IN ('Fresh', 'Expiring Soon')
         `;
         
         const [expiringItems] = await db.query(query, [req.user.id]);
