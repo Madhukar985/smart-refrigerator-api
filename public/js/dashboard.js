@@ -31,7 +31,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('addItemForm').addEventListener('submit', addManualItem);
     document.getElementById('saveProfileBtn').addEventListener('click', updateProfile);
     document.getElementById('saveItemBtn').addEventListener('click', saveEditedItem);
-    document.getElementById('testEmailBtn').addEventListener('click', testExpiryEmail);
 
     // Camera Event Listeners
     document.getElementById('startCameraBtn').addEventListener('click', startCamera);
@@ -47,28 +46,6 @@ function logout() {
     localStorage.removeItem('user');
     window.location.href = 'login.html';
 }
-
-async function testExpiryEmail(e) {
-    e.preventDefault();
-    showAlert('Sending test email logic... Please wait.', 'info', 'mainContentArea');
-    try {
-        const res = await fetch('/api/auth/test-email', {
-            method: 'POST',
-            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-        });
-        const data = await res.json();
-        
-        if (res.ok) {
-            showAlert('Success: ' + data.message, 'success', 'mainContentArea');
-        } else {
-            showAlert('Error: ' + (data.error || 'Failed to send email'), 'danger', 'mainContentArea');
-        }
-    } catch (err) {
-        console.error(err);
-        showAlert('Network error triggering email', 'danger', 'mainContentArea');
-    }
-}
-
 function showSection(sectionId, clickedElement) {
     // Hide all sections
     document.querySelectorAll('.d-section').forEach(sec => {
