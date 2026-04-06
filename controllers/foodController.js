@@ -198,8 +198,11 @@ exports.getExpiringItemsWithAI = async (req, res) => {
         
         let aiSuggestion = null;
 
-        if (expiringItems.length > 0 && process.env.GEMINI_API_KEY) {
-            let itemsListText = expiringItems.map(i => `${i.item_name} (Category: ${i.category || 'Unknown'})`).sort().join(', ');
+        const allowedCategories = ['Dairy', 'Vegetables', 'Meat'];
+        const filteredItems = expiringItems.filter(i => allowedCategories.includes(i.category));
+
+        if (filteredItems.length > 0 && process.env.GEMINI_API_KEY) {
+            let itemsListText = filteredItems.map(i => `${i.item_name} (Category: ${i.category})`).sort().join(', ');
             
             // 1. Check Cache
             const cached = suggestionCache.get(req.user.id);
@@ -210,7 +213,7 @@ exports.getExpiringItemsWithAI = async (req, res) => {
                 try {
                     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
                     const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-                    const prompt = `I have the following food items expiring in my fridge: ${itemsListText}. Group your meal suggestions specifically by the primary categories of these items (such as Dairy, Vegetables, Meat, etc.). For each category, suggest 1 or 2 creative Indian meals or recipes I can cook using the expiring items. Provide the name of each Indian dish and a 1-2 sentence short description. Keep it brief and return it formatted nicely as a list grouped by the category.`;
+                    const prompt = `I have the following food items expiring in my fridge: ${itemsListText}. Group your meal suggestions specifically by the categories: Dairy, Vegetables, and Meat. For each of these categories (if expiring items exist for it), suggest 1 or 2 creative Indian meals or recipes I can cook using the expiring items. Provide the name of each Indian dish and a 1-2 sentence short description. Keep it brief and return it formatted nicely as a list grouped strictly by these three categories. Do NOT include any other categories in the output.`;
                     const result = await model.generateContent(prompt);
                     aiSuggestion = result.response.text().trim();
                     
