@@ -450,6 +450,25 @@
                     <button type="button" class="btn btn-primary" id="saveItemBtn">Update Details</button>
                 </div>
             </div>
+    </div>
+
+    <!-- Chart Drilldown Modal -->
+    <div class="modal fade" id="chartDrilldownModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-light">
+                    <h5 class="modal-title fw-bold fs-6" id="drilldownTitle">Category Analysis</h5>
+                    <button type="button" class="btn-close fs-sm" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <ul id="drilldownItemsList" class="list-group list-group-flush mb-0 small" style="max-height: 400px; overflow-y: auto;">
+                        <!-- Items populated via JS -->
+                    </ul>
+                </div>
+                <div class="modal-footer bg-light border-top-0 py-2">
+                    <button type="button" class="btn btn-outline btn-sm" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
         </div>
     </div>
 

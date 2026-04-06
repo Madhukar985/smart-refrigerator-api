@@ -578,6 +578,8 @@ function loadCharts() {
     
     const consumedCategories = {};
     const wastedCategories = {};
+    const consumedDetails = {};
+    const wastedDetails = {};
 
     allItems.forEach(item => {
         const name = item.item_name.toLowerCase().trim();
@@ -585,11 +587,15 @@ function loadCharts() {
         
         if (item.status === 'Consumed') {
             consumedCategories[item.category] = (consumedCategories[item.category] || 0) + 1;
+            if (!consumedDetails[item.category]) consumedDetails[item.category] = [];
+            consumedDetails[item.category].push(item);
             return;
         }
         
         if (item.status === 'Expired') {
             wastedCategories[item.category] = (wastedCategories[item.category] || 0) + 1;
+            if (!wastedDetails[item.category]) wastedDetails[item.category] = [];
+            wastedDetails[item.category].push(item);
         }
         
         // Active items (not consumed)
@@ -634,7 +640,18 @@ function loadCharts() {
                     backgroundColor: ['#10B981', '#3B82F6', '#8B5CF6', '#F59E0B', '#EC4899', '#6B7280', '#06b6d4']
                 }]
             },
-            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } } }
+            options: { 
+                responsive: true, 
+                maintainAspectRatio: false, 
+                plugins: { legend: { position: 'right' } },
+                onClick: (event, elements) => {
+                    if (elements.length > 0) {
+                        const index = elements[0].index;
+                        const category = Object.keys(consumedCategories)[index];
+                        showDrilldownModal('Consumed Items: ' + category, consumedDetails[category]);
+                    }
+                }
+            }
         });
     }
 
@@ -655,7 +672,14 @@ function loadCharts() {
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: { legend: { display: false } },
-                scales: { y: { beginAtZero: true } }
+                scales: { y: { beginAtZero: true } },
+                onClick: (event, elements) => {
+                    if (elements.length > 0) {
+                        const index = elements[0].index;
+                        const category = Object.keys(wastedCategories)[index];
+                        showDrilldownModal('Wasted Items: ' + category, wastedDetails[category]);
+                    }
+                }
             }
         });
     }
@@ -712,6 +736,32 @@ function loadCharts() {
 }
 
 // Utilities
+function showDrilldownModal(title, items) {
+    document.getElementById('drilldownTitle').textContent = title;
+    const list = document.getElementById('drilldownItemsList');
+    list.innerHTML = '';
+    
+    if (!items || items.length === 0) {
+        list.innerHTML = '<li class="list-group-item text-muted">No items found.</li>';
+    } else {
+        items.forEach(item => {
+            const dateStr = new Date(item.expiry_date).toLocaleDateString();
+            list.innerHTML += `
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong class="text-dark">${item.item_name}</strong>
+                        <span class="text-muted ms-2">${item.quantity} ${item.unit || 'pcs'}</span>
+                    </div>
+                    <span class="badge bg-light text-secondary border">Exp: ${dateStr}</span>
+                </li>
+            `;
+        });
+    }
+    
+    const modal = new bootstrap.Modal(document.getElementById('chartDrilldownModal'));
+    modal.show();
+}
+
 function showAlert(message, type, containerId) {
     const alertPlaceholder = document.getElementById('alertPlaceholder');
     alertPlaceholder.innerHTML = `<div class="alert alert-${type} alert-dismissible fade show" role="alert">
