@@ -133,6 +133,7 @@ function updateDashboardView() {
     let fresh = 0;
     let expiring = 0;
     let expired = 0;
+    let activeTotal = 0;
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -141,6 +142,11 @@ function updateDashboardView() {
     dashboardTbody.innerHTML = '';
 
     allItems.forEach(item => {
+        if (item.status === 'Consumed' || item.status === 'Wasted') {
+            return; // Skip from active calculations
+        }
+        activeTotal++;
+
         const expiryDate = new Date(item.expiry_date);
         expiryDate.setHours(0,0,0,0);
         const diffDays = Math.round((expiryDate - today) / (1000 * 60 * 60 * 24));
@@ -179,7 +185,7 @@ function updateDashboardView() {
         dashboardTbody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-muted">No items expiring soon.</td></tr>';
     }
 
-    document.getElementById('totalItemsCount').textContent = total;
+    document.getElementById('totalItemsCount').textContent = activeTotal;
     document.getElementById('freshItemsCount').textContent = fresh;
     document.getElementById('expiringItemsCount').textContent = expiring;
     document.getElementById('expiredItemsCount').textContent = expired;
@@ -214,9 +220,17 @@ function updateInventoryView() {
         const expiryDate = new Date(item.expiry_date);
         expiryDate.setHours(0,0,0,0);
         const diffDays = Math.round((expiryDate - today) / (1000 * 60 * 60 * 24));
+        
         let statusClass = 'badge-fresh';
-        if (diffDays < 0) statusClass = 'badge-expired';
-        else if (diffDays <= 2) statusClass = 'badge-expiring';
+        if (item.status === 'Consumed') {
+            statusClass = 'bg-success text-white';
+        } else if (item.status === 'Wasted') {
+            statusClass = 'bg-secondary text-white';
+        } else if (diffDays < 0) {
+            statusClass = 'badge-expired';
+        } else if (diffDays <= 2) {
+            statusClass = 'badge-expiring';
+        }
 
         const tr = document.createElement('tr');
         tr.innerHTML = `
@@ -226,12 +240,38 @@ function updateInventoryView() {
             <td>${expiryDate.toLocaleDateString()}</td>
             <td><span class="badge ${statusClass} rounded-pill">${item.status}</span></td>
             <td>
-                <button class="btn btn-sm btn-outline-primary me-1" onclick="openEditModal(${item.item_id})"><i class="fa-solid fa-pen"></i></button>
-                <button class="btn btn-sm btn-outline-danger" onclick="deleteItem(${item.item_id})"><i class="fa-solid fa-trash"></i></button>
+                ${(item.status !== 'Consumed' && item.status !== 'Wasted') ? 
+                `<button class="btn btn-sm btn-outline-success me-1" onclick="markItemStatus(${item.item_id}, 'Consumed')" title="Mark Consumed"><i class="fa-solid fa-utensils"></i></button>
+                 <button class="btn btn-sm btn-outline-warning me-1" onclick="markItemStatus(${item.item_id}, 'Wasted')" title="Mark Wasted"><i class="fa-solid fa-trash-arrow-up"></i></button>` : ''}
+                <button class="btn btn-sm btn-outline-primary me-1" onclick="openEditModal(${item.item_id})" title="Edit"><i class="fa-solid fa-pen"></i></button>
+                <button class="btn btn-sm btn-outline-danger" onclick="deleteItem(${item.item_id})" title="Delete Physically"><i class="fa-solid fa-trash"></i></button>
             </td>
         `;
         tbody.appendChild(tr);
     });
+}
+
+// Mark status (Consumed/Wasted)
+async function markItemStatus(id, newStatus) {
+    if (!confirm(`Are you sure you want to mark this item as ${newStatus}?`)) return;
+
+    try {
+        const res = await fetch(`/api/food/${id}`, {
+            method: 'PUT',
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            },
+            body: JSON.stringify({ status: newStatus })
+        });
+
+        if (res.ok) {
+            showAlert(`Item marked as ${newStatus}`, 'success', 'mainContentArea');
+            await loadInventory();
+        }
+    } catch (err) {
+        console.error(err);
+    }
 }
 
 // Add Item
@@ -525,30 +565,44 @@ function useCapturedData() {
 }
 
 // Charts
+let consumptionChart = null;
+let wastageChart = null;
+
 function loadCharts() {
     if (myChart1) myChart1.destroy();
+    if (consumptionChart) consumptionChart.destroy();
+    if (wastageChart) wastageChart.destroy();
     dynamicCharts.forEach(c => c.destroy());
     dynamicCharts = [];
 
     // Prepare data
     const itemQty = {};
     const categoryItems = {};
+    
+    const consumedCategories = {};
+    const wastedCategories = {};
 
     allItems.forEach(item => {
         const name = item.item_name.toLowerCase().trim();
         const display = name.charAt(0).toUpperCase() + name.slice(1);
         
-        // Calculate usage by entry count (ignoring physical quantity for pie sections so ml/grams dont completely dwarf PCs visually in the pie)
-        itemQty[display] = (itemQty[display] || 0) + 1;
+        if (item.status === 'Consumed') {
+            consumedCategories[item.category] = (consumedCategories[item.category] || 0) + 1;
+            return;
+        }
         
-        // Group items strictly inside their respective categories
+        if (item.status === 'Wasted' || item.status === 'Expired') {
+            wastedCategories[item.category] = (wastedCategories[item.category] || 0) + 1;
+            if (item.status === 'Wasted') return;
+        }
+        
+        // Active items (not consumed, not explicitly wasted)
+        itemQty[display] = (itemQty[display] || 0) + 1;
         if (!categoryItems[item.category]) categoryItems[item.category] = {};
         categoryItems[item.category][display] = (categoryItems[item.category][display] || 0) + item.quantity;
     });
 
     const ctx1 = document.getElementById('categoryChart').getContext('2d');
-
-    // Dynamically generate a large palette for potentially many items
     const dynamicPalette = [];
     for(let i=0; i<Object.keys(itemQty).length; i++) {
         const colors = ['#4F46E5', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#6B7280', '#06b6d4', '#f97316', '#84cc16', '#eab308'];
@@ -569,54 +623,35 @@ function loadCharts() {
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            plugins: {
-                legend: { position: 'right' }
-            }
+            plugins: { legend: { position: 'right' } }
         }
     });
 
-    // Generate dynamic charts for each category
-    const container = document.getElementById('dynamicCategoryChartsContainer');
-    container.innerHTML = '';
+    const ctxCons = document.getElementById('consumptionChart');
+    if (ctxCons) {
+        consumptionChart = new Chart(ctxCons.getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                labels: Object.keys(consumedCategories),
+                datasets: [{
+                    data: Object.values(consumedCategories),
+                    backgroundColor: ['#10B981', '#3B82F6', '#8B5CF6', '#F59E0B', '#EC4899', '#6B7280', '#06b6d4']
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } } }
+        });
+    }
 
-    Object.keys(categoryItems).forEach((catName, index) => {
-        const itemData = categoryItems[catName];
-        
-        // build column
-        const col = document.createElement('div');
-        col.className = 'col-md-6 mb-4';
-        
-        const canvasId = `catChart_${index}`;
-        col.innerHTML = `
-            <div class="table-card h-100">
-                <h5 class="fw-bold mb-4 fs-6 pb-2 border-bottom">${catName} Items</h5>
-                <div class="px-3 pb-2" style="position: relative; height:250px; width:100%">
-                    <canvas id="${canvasId}"></canvas>
-                </div>
-            </div>
-        `;
-        container.appendChild(col);
-
-        // draw chart
-        const ctx = document.getElementById(canvasId).getContext('2d');
-        
-        // Sort items in this category by quantity
-        const sorted = Object.entries(itemData).sort((a,b) => b[1] - a[1]);
-        const labels = sorted.map(i => i[0]);
-        const data = sorted.map(i => i[1]);
-
-        // Dynamically rotate vibrant colors for bars
-        const colorPalette = ['#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#4F46E5'];
-        const barColor = colorPalette[index % colorPalette.length];
-
-        const newChart = new Chart(ctx, {
+    const ctxWaste = document.getElementById('wastageChart');
+    if (ctxWaste) {
+        wastageChart = new Chart(ctxWaste.getContext('2d'), {
             type: 'bar',
             data: {
-                labels: labels,
+                labels: Object.keys(wastedCategories),
                 datasets: [{
-                    label: 'Total Quantity',
-                    data: data,
-                    backgroundColor: barColor,
+                    label: '# Wasted Items',
+                    data: Object.values(wastedCategories),
+                    backgroundColor: '#EF4444',
                     borderRadius: 4
                 }]
             },
@@ -624,13 +659,60 @@ function loadCharts() {
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: { legend: { display: false } },
-                scales: {
-                    y: { beginAtZero: true }
-                }
+                scales: { y: { beginAtZero: true } }
             }
         });
-        dynamicCharts.push(newChart);
-    });
+    }
+
+    // Generate dynamic charts for each category
+    const container = document.getElementById('dynamicCategoryChartsContainer');
+    if (container) {
+        container.innerHTML = '';
+        Object.keys(categoryItems).forEach((catName, index) => {
+            const itemData = categoryItems[catName];
+            const col = document.createElement('div');
+            col.className = 'col-md-6 mb-4';
+            
+            const canvasId = `catChart_${index}`;
+            col.innerHTML = `
+                <div class="table-card h-100">
+                    <h5 class="fw-bold mb-4 fs-6 pb-2 border-bottom">${catName} Items</h5>
+                    <div class="px-3 pb-2" style="position: relative; height:250px; width:100%">
+                        <canvas id="${canvasId}"></canvas>
+                    </div>
+                </div>
+            `;
+            container.appendChild(col);
+
+            const ctx = document.getElementById(canvasId).getContext('2d');
+            const sorted = Object.entries(itemData).sort((a,b) => b[1] - a[1]);
+            const labels = sorted.map(i => i[0]);
+            const data = sorted.map(i => i[1]);
+
+            const colorPalette = ['#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#4F46E5'];
+            const barColor = colorPalette[index % colorPalette.length];
+
+            const newChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Total Quantity',
+                        data: data,
+                        backgroundColor: barColor,
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true } }
+                }
+            });
+            dynamicCharts.push(newChart);
+        });
+    }
 }
 
 // Utilities
