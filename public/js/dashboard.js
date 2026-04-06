@@ -203,7 +203,7 @@ function updateInventoryView() {
     }
 
     if (itemsToDisplay.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-muted">No items to display.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-muted">No items to display.</td></tr>';
         return;
     }
 
@@ -220,7 +220,6 @@ function updateInventoryView() {
 
         const tr = document.createElement('tr');
         tr.innerHTML = `
-            <td>#${item.item_id}</td>
             <td class="fw-semibold">${item.item_name}</td>
             <td>${item.category}</td>
             <td>${item.quantity} ${item.unit || 'pcs'}</td>
