@@ -137,18 +137,25 @@ exports.analyzeImage = async (req, res) => {
         
         const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
         // Switched to flash model as flash-lite may not follow strict JSON formatting as well
-        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+        const model = genAI.getGenerativeModel({ 
+            model: "gemini-2.5-flash",
+            generationConfig: { responseMimeType: "application/json" }
+        });
 
         const prompt = `
-            Analyze this image of a grocery or food item.
-            You must return a raw JSON object string. Do not wrap it in markdown code blocks. Do not include any conversational text like "Here is the JSON" or "I am sorry".
-            The JSON object must exact exactly these keys:
+            Analyze this image and accurately identify the primary grocery or food item.
+            CRITICAL INSTRUCTIONS:
+            1. Accurately identify the core food item. If there is a brand name, include it alongside the food type (e.g., "Amul Butter", "Heinz Tomato Ketchup"). Do not just say "Bottle" or "Packet".
+            2. For fruits, vegetables, and produce: BE HIGHLY SPECIFIC about the exact variety. Pay close attention to skin texture, color, and shape to distinguish similar items (e.g., accurately distinguish "Muskmelon/Cantaloupe" from "Honeydew Melon" based on the netted skin; identify "Red Onion" vs "White Onion"). Prefer standard Indian English nomenclature where applicable.
+            3. Ignore background objects, hands, or irrelevant text.
+            4. You MUST return ONLY a valid JSON object matching exactly this structure.
+            
             {
-                "name": "String (the specific name of the food item, e.g., 'Eggs', 'Milk')",
-                "category": "String (must be one of: 'Dairy', 'Vegetables', 'Fruits', 'Meat', 'Bakery', 'Beverages', 'Others')",
-                "quantity": Number (estimated fractional or whole quantity, e.g., 12.0 for eggs, 1.5 for a bag),
-                "unit": "String (must be one exactly of: 'pcs', 'kg', 'gm', 'L', 'ml')",
-                "expiryDays": Number (CRITICAL INSTRUCTION: FIRST, strictly search the image for ANY printed expiration dates, "Best By", "Sell By", or "Use By" labels. If you can read a exact date printed anywhere on the packaging, calculate the exact number of days from today until that printed date. ONLY if there is absolutely no printed date visible, then estimate the days until it expires based on standard food safety knowledge)
+                "name": "String (the specific name of the food item, e.g., 'Muskmelon', 'Red Tomatoes')",
+                "category": "String (must be exactly one of: 'Dairy', 'Vegetables', 'Fruits', 'Meat', 'Bakery', 'Beverages', 'Others')",
+                "quantity": Number (estimated quantity, e.g., 12 for eggs, 1 for a single packet),
+                "unit": "String (must be exactly one of: 'pcs', 'kg', 'gm', 'L', 'ml')",
+                "expiryDays": Number (CRITICAL: FIRST attempt to read any printed expiration date on the packaging. If you find a date, calculate days from today until that date. If no date is visible, estimate the remaining shelf life in days based on standard food safety knowledge)
             }
         `;
 
@@ -158,19 +165,12 @@ exports.analyzeImage = async (req, res) => {
         ]);
 
         const text = result.response.text();
-        
-        // Clean the text aggressively before parsing
-        let jsonStr = text.trim();
-        if (jsonStr.startsWith('```json')) jsonStr = jsonStr.substring(7);
-        if (jsonStr.startsWith('```')) jsonStr = jsonStr.substring(3);
-        if (jsonStr.endsWith('```')) jsonStr = jsonStr.substring(0, jsonStr.length - 3);
-        jsonStr = jsonStr.trim();
 
         try {
-            const parsedData = JSON.parse(jsonStr);
+            const parsedData = JSON.parse(text);
             res.json(parsedData);
         } catch (parseError) {
-            console.error("Gemini AI API Error: Invalid JSON:", jsonStr);
+            console.error("Gemini AI API Error: Invalid JSON:", text);
             res.status(500).json({ error: 'Failed to process AI response into valid format. Please try again.' });
         }
         
