@@ -563,16 +563,16 @@ function loadCharts() {
         const display = name.charAt(0).toUpperCase() + name.slice(1);
         
         if (item.status === 'Consumed') {
-            consumedCategories[item.category] = (consumedCategories[item.category] || 0) + 1;
-            if (!consumedDetails[item.category]) consumedDetails[item.category] = [];
-            consumedDetails[item.category].push(item);
+            consumedCategories[display] = (consumedCategories[display] || 0) + 1;
+            if (!consumedDetails[display]) consumedDetails[display] = [];
+            consumedDetails[display].push(item);
             return;
         }
         
         if (item.status === 'Expired') {
-            wastedCategories[item.category] = (wastedCategories[item.category] || 0) + 1;
-            if (!wastedDetails[item.category]) wastedDetails[item.category] = [];
-            wastedDetails[item.category].push(item);
+            wastedCategories[display] = (wastedCategories[display] || 0) + 1;
+            if (!wastedDetails[display]) wastedDetails[display] = [];
+            wastedDetails[display].push(item);
         }
         
         // Active items (not consumed)
@@ -624,8 +624,8 @@ function loadCharts() {
                 onClick: (event, elements) => {
                     if (elements.length > 0) {
                         const index = elements[0].index;
-                        const category = Object.keys(consumedCategories)[index];
-                        showDrilldownModal('Consumed Items: ' + category, consumedDetails[category]);
+                        const itemNameKey = Object.keys(consumedCategories)[index];
+                        showDrilldownModal('Consumed Item: ' + itemNameKey, consumedDetails[itemNameKey]);
                     }
                 }
             }
@@ -653,8 +653,8 @@ function loadCharts() {
                 onClick: (event, elements) => {
                     if (elements.length > 0) {
                         const index = elements[0].index;
-                        const category = Object.keys(wastedCategories)[index];
-                        showDrilldownModal('Wasted Items: ' + category, wastedDetails[category]);
+                        const itemNameKey = Object.keys(wastedCategories)[index];
+                        showDrilldownModal('Wasted Item: ' + itemNameKey, wastedDetails[itemNameKey]);
                     }
                 }
             }
@@ -727,6 +727,7 @@ function showDrilldownModal(title, items) {
                 <li class="list-group-item d-flex justify-content-between align-items-center">
                     <div>
                         <strong class="text-dark">${item.item_name}</strong>
+                        <span class="badge bg-primary bg-opacity-10 text-primary ms-2 px-2 py-1">${item.category}</span>
                         <span class="text-muted ms-2">${item.quantity} ${item.unit || 'pcs'}</span>
                     </div>
                     <span class="badge bg-light text-secondary border">Exp: ${dateStr}</span>
