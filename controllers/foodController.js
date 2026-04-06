@@ -146,12 +146,13 @@ exports.analyzeImage = async (req, res) => {
             Analyze this image and accurately identify the primary grocery or food item.
             CRITICAL INSTRUCTIONS:
             1. Accurately identify the core food item. If there is a brand name, include it alongside the food type (e.g., "Amul Butter", "Heinz Tomato Ketchup"). Do not just say "Bottle" or "Packet".
-            2. For fruits, vegetables, and produce: BE HIGHLY SPECIFIC about the exact variety. Pay close attention to skin texture, color, and shape to distinguish similar items (e.g., accurately distinguish "Muskmelon/Cantaloupe" from "Honeydew Melon" based on the netted skin; identify "Red Onion" vs "White Onion"). Prefer standard Indian English nomenclature where applicable.
-            3. Ignore background objects, hands, or irrelevant text.
-            4. You MUST return ONLY a valid JSON object matching exactly this structure.
+            2. For fruits, vegetables, and produce: BE HIGHLY SPECIFIC about the exact variety. Pay close attention to skin texture, color, and shape.
+            3. Use FORMAL Indian English nomenclature. Avoid colloquial or slang terms (e.g., ALWAYS use "Sapota" instead of "Chikoo", use "Coriander" instead of "Cilantro" or "Dhania", use "Muskmelon" instead of "Cantaloupe").
+            4. Ignore background objects, hands, or irrelevant text.
+            5. You MUST return ONLY a valid JSON object matching exactly this structure.
             
             {
-                "name": "String (the specific name of the food item, e.g., 'Muskmelon', 'Red Tomatoes')",
+                "name": "String (the specific name of the food item, e.g., 'Sapota', 'Red Tomatoes')",
                 "category": "String (must be exactly one of: 'Dairy', 'Vegetables', 'Fruits', 'Meat', 'Bakery', 'Beverages', 'Others')",
                 "quantity": Number (estimated quantity, e.g., 12 for eggs, 1 for a single packet),
                 "unit": "String (must be exactly one of: 'pcs', 'kg', 'gm', 'L', 'ml')",
