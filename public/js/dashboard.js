@@ -142,7 +142,7 @@ function updateDashboardView() {
     dashboardTbody.innerHTML = '';
 
     allItems.forEach(item => {
-        if (item.status === 'Consumed' || item.status === 'Wasted') {
+        if (item.status === 'Consumed') {
             return; // Skip from active calculations
         }
         activeTotal++;
@@ -224,8 +224,6 @@ function updateInventoryView() {
         let statusClass = 'badge-fresh';
         if (item.status === 'Consumed') {
             statusClass = 'bg-success text-white';
-        } else if (item.status === 'Wasted') {
-            statusClass = 'bg-secondary text-white';
         } else if (diffDays < 0) {
             statusClass = 'badge-expired';
         } else if (diffDays <= 2) {
@@ -240,9 +238,8 @@ function updateInventoryView() {
             <td>${expiryDate.toLocaleDateString()}</td>
             <td><span class="badge ${statusClass} rounded-pill">${item.status}</span></td>
             <td>
-                ${(item.status !== 'Consumed' && item.status !== 'Wasted') ? 
-                `<button class="btn btn-sm btn-outline-success me-1" onclick="markItemStatus(${item.item_id}, 'Consumed')" title="Mark Consumed"><i class="fa-solid fa-utensils"></i></button>
-                 <button class="btn btn-sm btn-outline-warning me-1" onclick="markItemStatus(${item.item_id}, 'Wasted')" title="Mark Wasted"><i class="fa-solid fa-trash-arrow-up"></i></button>` : ''}
+                ${(item.status !== 'Consumed') ? 
+                `<button class="btn btn-sm btn-outline-success me-1" onclick="markItemStatus(${item.item_id}, 'Consumed')" title="Mark Consumed"><i class="fa-solid fa-utensils"></i></button>` : ''}
                 <button class="btn btn-sm btn-outline-primary me-1" onclick="openEditModal(${item.item_id})" title="Edit"><i class="fa-solid fa-pen"></i></button>
                 <button class="btn btn-sm btn-outline-danger" onclick="deleteItem(${item.item_id})" title="Delete Physically"><i class="fa-solid fa-trash"></i></button>
             </td>
@@ -591,12 +588,11 @@ function loadCharts() {
             return;
         }
         
-        if (item.status === 'Wasted' || item.status === 'Expired') {
+        if (item.status === 'Expired') {
             wastedCategories[item.category] = (wastedCategories[item.category] || 0) + 1;
-            if (item.status === 'Wasted') return;
         }
         
-        // Active items (not consumed, not explicitly wasted)
+        // Active items (not consumed)
         itemQty[display] = (itemQty[display] || 0) + 1;
         if (!categoryItems[item.category]) categoryItems[item.category] = {};
         categoryItems[item.category][display] = (categoryItems[item.category][display] || 0) + item.quantity;
