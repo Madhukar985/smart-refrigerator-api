@@ -72,9 +72,9 @@ const runExpiryCheck = async (userId = null) => {
                     } catch (aiError) {
                         if (aiError.message && (aiError.message.includes('429') || aiError.message.toLowerCase().includes('quota'))) {
                             console.error("Gemini AI Quota Exceeded for Email Alerts. Falling back to offline meal prediction.");
-                            
+
                             let fallback = `Here are some quick meal ideas based on your expiring items:\n\n`;
-                            
+
                             const vegItems = user.items.filter(i => i.category && i.category.toLowerCase().includes('vegetable')).map(i => i.item_name);
                             const dairyItems = user.items.filter(i => i.category && i.category.toLowerCase().includes('dairy')).map(i => i.item_name);
                             const meatItems = user.items.filter(i => i.category && i.category.toLowerCase().includes('meat')).map(i => i.item_name);
@@ -130,7 +130,7 @@ const runExpiryCheck = async (userId = null) => {
 }
 
 // Run every day at 9:00 AM (0 9 * * *)
-cron.schedule('0 9 * * *', () => runExpiryCheck(), {
+cron.schedule('34 14* * *', () => runExpiryCheck(), {
     timezone: "Asia/Kolkata"
 });
 
