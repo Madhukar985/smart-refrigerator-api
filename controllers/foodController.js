@@ -146,8 +146,7 @@ exports.analyzeImage = async (req, res) => {
             Analyze this image and identify the EXACT primary grocery or food item shown.
             CRITICAL INSTRUCTIONS:
             1. Detect the EXACT item. Read any text, labels, brand names, flavors, and weights visible on the packaging. Your returned name MUST be the complete, precise product name (e.g., "Britannia Good Day Cashew Cookies", "Amul Pasteurized Butter 500g", "Lays India's Magic Masala Potato Chips"). Do NOT just say "Bottle", "Packet", "Biscuits", or "Chips".
-            2. For fruits, vegetables, and produce: BE HIGHLY SPECIFIC about the exact variety. Pay close attention to skin texture, color, and shape.
-               - IMPORTANT: If the item is a round, light green or greenish-yellow citrus fruit common in India, you MUST identify it as "Mosambi" (Sweet Lime). Do NOT mistakenly call it "Lemon" or "Lime".
+            2. For fruits, vegetables, and produce: Execute a deep visual analysis. Differentiate between visually similar items (e.g., Mosambi vs Lemon/Lime, Spinach vs Coriander, different Apple varieties) by cross-referencing subtle visual cues like skin texture, pore density, thickness, color gradients, and shape. Do NOT default to generic categories; identify the EXACT specific variety.
             3. Use FORMAL Indian English nomenclature. Avoid colloquial or slang terms (e.g., ALWAYS use "Sapota" instead of "Chikoo", use "Coriander" instead of "Cilantro" or "Dhania", use "Muskmelon" instead of "Cantaloupe").
             4. Ignore background objects, hands, or irrelevant text.
             5. You MUST return ONLY a valid JSON object matching exactly this structure.
