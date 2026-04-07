@@ -143,16 +143,17 @@ exports.analyzeImage = async (req, res) => {
         });
 
         const prompt = `
-            Analyze this image and accurately identify the primary grocery or food item.
+            Analyze this image and identify the EXACT primary grocery or food item shown.
             CRITICAL INSTRUCTIONS:
-            1. Accurately identify the core food item. If there is a brand name, include it alongside the food type (e.g., "Amul Butter", "Heinz Tomato Ketchup"). Do not just say "Bottle" or "Packet".
+            1. Detect the EXACT item. Read any text, labels, brand names, flavors, and weights visible on the packaging. Your returned name MUST be the complete, precise product name (e.g., "Britannia Good Day Cashew Cookies", "Amul Pasteurized Butter 500g", "Lays India's Magic Masala Potato Chips"). Do NOT just say "Bottle", "Packet", "Biscuits", or "Chips".
             2. For fruits, vegetables, and produce: BE HIGHLY SPECIFIC about the exact variety. Pay close attention to skin texture, color, and shape.
+               - IMPORTANT: If the item is a round, light green or greenish-yellow citrus fruit common in India, you MUST identify it as "Mosambi" (Sweet Lime). Do NOT mistakenly call it "Lemon" or "Lime".
             3. Use FORMAL Indian English nomenclature. Avoid colloquial or slang terms (e.g., ALWAYS use "Sapota" instead of "Chikoo", use "Coriander" instead of "Cilantro" or "Dhania", use "Muskmelon" instead of "Cantaloupe").
             4. Ignore background objects, hands, or irrelevant text.
             5. You MUST return ONLY a valid JSON object matching exactly this structure.
             
             {
-                "name": "String (the specific name of the food item, e.g., 'Sapota', 'Red Tomatoes')",
+                "name": "String (the specific, exact name of the food item including brand/variant if visible, e.g., 'Amul Taaza Homogenised Toned Milk', 'Mosambi')",
                 "category": "String (must be exactly one of: 'Dairy', 'Vegetables', 'Fruits', 'Meat', 'Bakery', 'Beverages', 'Others')",
                 "quantity": Number (estimated quantity, e.g., 12 for eggs, 1 for a single packet),
                 "unit": "String (must be exactly one of: 'pcs', 'kg', 'gm', 'L', 'ml')",
