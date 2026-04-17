@@ -496,10 +496,12 @@ async function captureImage() {
                 <div class="alert alert-success py-2 small mb-0">
                     <strong>AI Detected:</strong> "${currentCapturedItem.name}" <br>
                     Category: ${currentCapturedItem.category} | Qty: ${currentCapturedItem.qty} ${currentCapturedItem.unit} | Est. Expiry: ${currentCapturedItem.expiryDays} days<br>
-                    <button class="btn btn-sm btn-link p-0 mt-1" onclick="useCapturedData()">Use this data</button>
+                    <em>Form auto-populated successfully!</em>
                 </div>
             `;
             resultDiv.classList.remove('d-none');
+            // Automatically populate the form
+            useCapturedData();
         } else {
             console.error(data);
             showAlert(data.error || 'AI Failed to identify standard food item.', 'danger', 'mainContentArea');
@@ -532,8 +534,6 @@ function useCapturedData() {
     const d = new Date();
     d.setDate(d.getDate() + currentCapturedItem.expiryDays);
     document.getElementById('itemExpiry').value = d.toISOString().split('T')[0];
-    
-    document.getElementById('cameraResult').classList.add('d-none');
     
     showAlert('Data extracted from image and filled in the form', 'info', 'mainContentArea');
 }
