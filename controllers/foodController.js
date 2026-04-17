@@ -224,18 +224,13 @@ exports.getExpiringItemsWithAI = async (req, res) => {
                         timestamp: Date.now()
                     });
                 } catch (aiError) {
-                    if (aiError.message && aiError.message.includes('429')) {
-                        console.error("Gemini AI Quota Exceeded for Meal Suggestions");
-                        
-                        let fallback = `Here are some quick ideas for your expiring items (${itemsListText}):<br><br>`;
-                        fallback += `&bull; <strong>Stir Fry / Mix Curry</strong>: Toss your fresh ingredients into a quick comforting Indian curry or sabzi.<br>`;
-                        fallback += `&bull; <strong>Pulao / Fried Rice</strong>: Mix remaining items with rice and gentle spices for an easy meal.<br><br>`;
-                        fallback += `<i>(AI personalized recipes are temporarily paused to save API quota. Try again later!)</i>`;
-                        aiSuggestion = fallback;
-                    } else {
-                        console.error('AI Suggestion Error on Dashboard:', aiError.message);
-                        aiSuggestion = "Could not generate AI meal suggestion at this time.";
-                    }
+                    console.error("Gemini AI API Error for Meal Suggestions:", aiError.message);
+                    
+                    let fallback = `Here are some quick ideas for your expiring items (${itemsListText}):<br><br>`;
+                    fallback += `&bull; <strong>Stir Fry / Mix Curry</strong>: Toss your fresh ingredients into a quick comforting Indian curry or sabzi.<br>`;
+                    fallback += `&bull; <strong>Pulao / Fried Rice</strong>: Mix remaining items with rice and gentle spices for an easy meal.<br><br>`;
+                    fallback += `<i>(AI personalized recipes are temporarily unavailable. Try again later!)</i>`;
+                    aiSuggestion = fallback;
                 }
             }
         }

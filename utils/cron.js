@@ -70,41 +70,37 @@ const runExpiryCheck = async (userId = null) => {
                         const result = await model.generateContent(prompt);
                         aiSuggestion = '💡 AI Recipe Suggestion: \n' + result.response.text().trim();
                     } catch (aiError) {
-                        if (aiError.message && (aiError.message.includes('429') || aiError.message.toLowerCase().includes('quota'))) {
-                            console.error("Gemini AI Quota Exceeded for Email Alerts. Falling back to offline meal prediction.");
+                        console.error("Gemini AI API Error for Email Alerts. Falling back to offline meal prediction:", aiError.message);
+                        
+                        let fallback = `Here are some quick meal ideas based on your expiring items:\n\n`;
 
-                            let fallback = `Here are some quick meal ideas based on your expiring items:\n\n`;
+                        const vegItems = user.items.filter(i => i.category && i.category.toLowerCase().includes('vegetable')).map(i => i.item_name);
+                        const dairyItems = user.items.filter(i => i.category && i.category.toLowerCase().includes('dairy')).map(i => i.item_name);
+                        const meatItems = user.items.filter(i => i.category && i.category.toLowerCase().includes('meat')).map(i => i.item_name);
+                        const otherItems = user.items.filter(i => !i.category || (!i.category.toLowerCase().includes('vegetable') && !i.category.toLowerCase().includes('dairy') && !i.category.toLowerCase().includes('meat'))).map(i => i.item_name);
 
-                            const vegItems = user.items.filter(i => i.category && i.category.toLowerCase().includes('vegetable')).map(i => i.item_name);
-                            const dairyItems = user.items.filter(i => i.category && i.category.toLowerCase().includes('dairy')).map(i => i.item_name);
-                            const meatItems = user.items.filter(i => i.category && i.category.toLowerCase().includes('meat')).map(i => i.item_name);
-                            const otherItems = user.items.filter(i => !i.category || (!i.category.toLowerCase().includes('vegetable') && !i.category.toLowerCase().includes('dairy') && !i.category.toLowerCase().includes('meat'))).map(i => i.item_name);
-
-                            if (vegItems.length > 0) {
-                                const dishName = vegItems.length > 1 ? `${vegItems[0]} & ${vegItems[1]} Kadai` : `${vegItems[0]} Masala`;
-                                fallback += `- ${dishName}: Toss ${vegItems.join(', ')} into a comforting Indian curry or stir-fry.\n`;
-                            }
-                            if (dairyItems.length > 0) {
-                                const mainDairy = dairyItems[0];
-                                const dishName = mainDairy.toLowerCase().includes('paneer') || mainDairy.toLowerCase().includes('cheese') ? `${mainDairy} Butter Masala` : `Creamy ${mainDairy} Dessert`;
-                                fallback += `- ${dishName}: Use ${dairyItems.join(', ')} to prepare a rich, creamy dish.\n`;
-                            }
-                            if (meatItems.length > 0) {
-                                const dishName = `${meatItems[0]} Tikka Masala`;
-                                fallback += `- ${dishName}: Marinate and cook ${meatItems.join(', ')} for a fast and protein-rich dish.\n`;
-                            }
-                            if (otherItems.length > 0 && vegItems.length === 0 && dairyItems.length === 0 && meatItems.length === 0) {
-                                const dishName = `${otherItems[0]} Pulao`;
-                                fallback += `- ${dishName}: Sauté ${otherItems.join(', ')} with rice and mild spices for a simple one-pot meal.\n`;
-                            } else if (otherItems.length > 0) {
-                                fallback += `- Mixed ${otherItems[0]} Pulao: Sauté ${otherItems.join(', ')} with rice for a simple addition to your meal.\n`;
-                            }
-
-                            fallback += `\n(AI personalized recipes are temporarily paused to save API quota. Try again tomorrow!)`;
-                            aiSuggestion = '💡 Offline Recipe Suggestion: \n' + fallback;
-                        } else {
-                            console.error('AI Suggestion Error:', aiError.message);
+                        if (vegItems.length > 0) {
+                            const dishName = vegItems.length > 1 ? `${vegItems[0]} & ${vegItems[1]} Kadai` : `${vegItems[0]} Masala`;
+                            fallback += `- ${dishName}: Toss ${vegItems.join(', ')} into a comforting Indian curry or stir-fry.\n`;
                         }
+                        if (dairyItems.length > 0) {
+                            const mainDairy = dairyItems[0];
+                            const dishName = mainDairy.toLowerCase().includes('paneer') || mainDairy.toLowerCase().includes('cheese') ? `${mainDairy} Butter Masala` : `Creamy ${mainDairy} Dessert`;
+                            fallback += `- ${dishName}: Use ${dairyItems.join(', ')} to prepare a rich, creamy dish.\n`;
+                        }
+                        if (meatItems.length > 0) {
+                            const dishName = `${meatItems[0]} Tikka Masala`;
+                            fallback += `- ${dishName}: Marinate and cook ${meatItems.join(', ')} for a fast and protein-rich dish.\n`;
+                        }
+                        if (otherItems.length > 0 && vegItems.length === 0 && dairyItems.length === 0 && meatItems.length === 0) {
+                            const dishName = `${otherItems[0]} Pulao`;
+                            fallback += `- ${dishName}: Sauté ${otherItems.join(', ')} with rice and mild spices for a simple one-pot meal.\n`;
+                        } else if (otherItems.length > 0) {
+                            fallback += `- Mixed ${otherItems[0]} Pulao: Sauté ${otherItems.join(', ')} with rice for a simple addition to your meal.\n`;
+                        }
+
+                        fallback += `\n(AI personalized recipes are temporarily unavailable. Try again tomorrow!)`;
+                        aiSuggestion = '💡 Offline Recipe Suggestion: \n' + fallback;
                     }
                 }
 
